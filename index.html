@@ -268,6 +268,7 @@ ol.howto{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px}
 
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.resume-code{font-size:1.4rem;font-weight:800;letter-spacing:.12em;color:var(--lav-ink);background:var(--surface-2);padding:6px 12px;border-radius:10px}
 .avoid-box{display:grid;gap:10px;padding:12px;border:1px dashed var(--line);border-radius:14px}
 .avoid-row{align-items:flex-end}
 .avoid-row .f{flex:1 1 140px;min-width:0}
@@ -1051,7 +1052,8 @@ function renderAcct(){
       <p><b>로그인 없이 쓰고 있어요.</b></p>
       ${nm ? `<p class="small muted">이 사이트에서는 <b>${esc(nm)}</b> 이름으로 보여요. 이름은 내 팀 목록에서 바꿀 수 있어요.</p>` : '<p class="small muted">팀을 만들거나 참여하면 이름이 등록돼요.</p>'}
       <p class="small"><b>꼭 알아두세요</b></p>
-      <ol><li>내 정보는 <b>지금 쓰는 브라우저</b>에 연결돼 있어요.</li><li>다른 기기나 브라우저에서 열면 새 사람으로 보여요. 같은 기기·브라우저로 들어와 주세요.</li><li>브라우저의 사이트 데이터(쿠키)를 지우면 내 정보와 연결이 끊겨요.</li></ol>
+      <ol><li>내 정보는 <b>지금 쓰는 브라우저</b>에 연결돼 있어요.</li><li>다른 기기나 브라우저에서 같은 사람으로 쓰려면 <b>이어하기 코드</b>를 이용하세요.</li><li>브라우저의 사이트 데이터(쿠키)를 지우기 전에 이어하기 코드를 꼭 만들어 두세요.</li></ol>
+      <div><a class="btn sm" href="#home" data-goresume="1">다른 기기에서 이어하기</a></div>
     </div>` : `
     <summary aria-label="연결 안내 보기"><span class="acct-dot" aria-hidden="true">!</span>미리보기</summary>
     <div class="acct-pop">
@@ -1060,6 +1062,7 @@ function renderAcct(){
     </div>`;
 }
 document.addEventListener('click', e => { const a = $('#acct'); if(a && a.open && !a.contains(e.target)) a.open = false; });
+document.addEventListener('click', e => { if(e.target.closest && e.target.closest('[data-goresume]')){ const a = $('#acct'); if(a) a.open = false; setTimeout(() => scrollToId('resume'), 250); } });
 document.addEventListener('keydown', e => { const a = $('#acct'); if(e.key === 'Escape' && a && a.open){ a.open = false; a.querySelector('summary').focus(); } });
 function render(){
   pendingRender = false;
@@ -1094,6 +1097,7 @@ function viewJoinTeam(){
       ${nameField('jt-name')}
       ${myName() ? `<p><b>${esc(myName())}</b> 이름으로 참여해요.</p>` : ''}
       <div class="row"><button class="btn primary big shrink" type="submit">이 팀에 참여하기</button><a class="btn shrink" href="#home">내 팀 목록으로</a></div>
+      ${S.mode === 'live' && !myName() ? '<p class="small muted">다른 기기에서 이미 이 팀에 참여했나요? 새로 참여하지 말고 <a href="#home" data-goresume="1">내 팀 목록 → 다른 기기에서 이어하기</a>에 이어하기 코드를 넣어 주세요.</p>' : ''}
     </form>
   </section>`;
 }
@@ -1152,7 +1156,81 @@ function viewTeams(){
         <button class="btn shrink" type="submit">이름 바꾸기</button>
       </form>` : ''}
     </section>
-  </div>`;
+  </div>
+  ${resumeCard()}`;
+}
+
+/* =============================== 다른 기기에서 이어하기 =============================== */
+// keys/{코드} = {uid: 조원ID}, secrets/{조원ID} = {code} (나만 볼 수 있음), links/{기기ID} = {mid: 조원ID, code}
+const fmtResume = c => c ? c.slice(0, 4) + '-' + c.slice(4) : '';
+function resumeCard(){
+  if(S.mode !== 'live') return '';
+  const R = S.resume || {};
+  const linked = S.authUid && S.authUid !== S.uid;
+  return `<section class="card" id="resume">
+    <div><h2>다른 기기에서 이어하기</h2><p class="muted small">폰과 노트북처럼 여러 기기에서 같은 사람으로 쓰고 싶을 때 이용하세요.</p></div>
+    ${linked ? `<p class="note small">이 기기는 다른 기기의 정보로 이어서 쓰고 있어요. <button class="btn ghost sm" data-act="unlinkDevice">이 기기 연결 끊기</button></p>` : ''}
+    <div class="grid2 even">
+      <div style="display:grid;gap:10px;align-content:start">
+        <h3>① 지금 쓰던 기기에서</h3>
+        <p class="small muted">이어하기 코드를 만들고, 다른 기기에서 입력하세요.</p>
+        ${!R.loaded ? '<div class="skel"></div>' : R.code ? `
+          <div class="row" style="align-items:center"><span class="resume-code num">${esc(fmtResume(R.code))}</span><button class="btn sm shrink" data-act="copyResume">복사</button></div>
+          <p class="small muted">이 코드를 아는 사람은 내 이름으로 입력할 수 있어요. 다른 사람에게 알려주지 마세요.</p>
+          <div><button class="btn ghost sm" data-act="makeResume">코드 새로 만들기</button></div>` : `
+          <div><button class="btn primary" data-act="makeResume">이어하기 코드 만들기</button></div>`}
+        ${errBox('resume')}
+      </div>
+      <form data-form="resume" style="display:grid;gap:10px;align-content:start">
+        <h3>② 새 기기에서</h3>
+        <label class="f">받은 이어하기 코드<input class="in num" id="rs-code" maxlength="9" placeholder="예: K7M2-QX9P" autocomplete="off" style="text-transform:uppercase;letter-spacing:.12em"></label>
+        ${S.meDoc && (S.meDoc.teamIds || []).length && !linked ? '<p class="small" style="color:var(--warn)">이 기기에서 쓰던 팀 정보는 이어하기 후에 보이지 않아요. 새로 쓰는 기기에서만 입력하세요.</p>' : ''}
+        <div><button class="btn primary" type="submit" ${S.busy.resume ? 'disabled' : ''}>${S.busy.resume ? '확인 중…' : '이어하기'}</button></div>
+      </form>
+    </div>
+  </section>`;
+}
+function randCode(n){ const a = new Uint32Array(n); crypto.getRandomValues(a); return Array.from(a, x => CODE_CHARS[x % CODE_CHARS.length]).join(''); }
+async function loadResume(){
+  try{ const s = await S.db.doc('secrets/' + S.uid).get(); S.resume = {loaded: true, code: s.exists ? s.data().code : ''}; }
+  catch(e){ S.resume = {loaded: true, code: ''}; }
+  scheduleRender();
+}
+async function makeResume(){
+  S.errors.resume = null;
+  const old = (S.resume || {}).code;
+  try{
+    let code = '';
+    for(let i = 0; i < 5 && !code; i++){
+      const c = randCode(8);
+      try{ await S.db.doc('keys/' + c).set({uid: S.uid, createdAt: Date.now()}); code = c; }catch(e){ if(e.code !== 'permission-denied') throw e; }
+    }
+    if(!code) throw new Error('코드를 만들지 못했어요. 다시 시도해 주세요.');
+    await S.db.doc('secrets/' + S.uid).set({code});
+    if(old) S.db.doc('keys/' + old).delete().catch(() => {});
+    S.resume = {loaded: true, code};
+    toast(old ? '새 코드를 만들었어요. 예전 코드는 더 이상 쓸 수 없어요.' : '이어하기 코드를 만들었어요.');
+  }catch(e){ console.error(e); S.errors.resume = e.message || '코드를 만들지 못했어요.'; }
+  render();
+}
+async function useResume(raw){
+  const code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if(code.length !== 8){ toast('이어하기 코드는 영문과 숫자 8자리예요.'); return; }
+  S.busy.resume = true; render();
+  try{
+    const k = await S.db.doc('keys/' + code).get();
+    if(!k.exists){ toast('없는 코드예요. 다시 확인해 주세요.'); return; }
+    const mid = k.data().uid;
+    if(mid === S.uid){ toast('이미 이 기기에서 쓰고 있는 정보예요.'); return; }
+    await S.db.doc('links/' + S.authUid).set({mid, code, at: Date.now()});
+    toast('이어하기에 성공했어요. 잠시 후 새로 불러올게요.');
+    setTimeout(() => location.reload(), 900);
+  }catch(e){ console.error(e); toast('이어하지 못했어요. 코드를 확인하고 다시 시도해 주세요.'); }
+  finally{ S.busy.resume = false; render(); }
+}
+async function unlinkDevice(){
+  try{ await S.db.doc('links/' + S.authUid).delete(); toast('연결을 끊었어요. 이 기기는 원래 정보로 돌아가요.'); setTimeout(() => location.reload(), 900); }
+  catch(e){ toast('연결을 끊지 못했어요. 다시 시도해 주세요.'); }
 }
 
 /* =============================== 홈 =============================== */
@@ -1607,6 +1685,9 @@ const ACTIONS = {
     clearTimeout(ACTIONS._avT);
     ACTIONS._avT = setTimeout(() => { ACTIONS._avT = null; const cur = (S.meDoc.t || {})[tid] || {}; saveMemberDoc({}, {avail: cur.avail || [], availSaved: true}, {}, tid); }, 600);
   },
+  makeResume(){ makeResume(); },
+  unlinkDevice(el){ if(!twoStep(el, '정말 끊을까요? 한 번 더 누르세요')) return; unlinkDevice(); },
+  async copyResume(){ const c = fmtResume((S.resume || {}).code); try{ await navigator.clipboard.writeText(c); toast('이어하기 코드를 복사했어요. 다른 기기에서 입력하세요.'); }catch(e){ toast(`복사가 막혀 있어요. 코드는 ${c}예요.`); } },
   async copyLink(){ const url = location.origin + location.pathname + '#t-' + S.teamId; const msg = `[언제되조?] ${S.team.name || '우리 팀'} 팀플에 참여해 주세요!\n${url}\n(팀 코드: ${S.teamId})`;
     try{ await navigator.clipboard.writeText(msg); toast('초대 링크를 복사했어요. 단톡방에 붙여넣어 주세요.'); }catch(e){ toast(`복사가 막혀 있어요. 주소: ${url}`); } },
   async copyCode(){ try{ await navigator.clipboard.writeText(S.teamId); toast(`팀 코드 ${S.teamId}를 복사했어요. 조원에게 보내 주세요.`); }catch(e){ toast(`복사가 막혀 있어요. 팀 코드는 ${S.teamId}예요.`); } },
@@ -1671,6 +1752,7 @@ document.addEventListener('submit', e => {
     S.draft.name = '';
     createTeam({name: tname, course: $('#ct-course').value.trim().slice(0, 30), size: size >= 1 && size <= 12 ? size : null}, myName() ? null : name);
   }
+  if(f === 'resume'){ useResume($('#rs-code').value); return; }
   if(f === 'joinCode'){
     const name = readName('jc-me'), code = $('#jc-code').value.trim().toUpperCase();
     if(!name){ toast('이름을 입력해 주세요.'); return; }
@@ -1787,16 +1869,23 @@ async function boot(){
     for(const src of FB_SDK) await loadScript(src);
     fb = window.firebase;
     if(!fb.apps.length) fb.initializeApp(FIREBASE_CONFIG);
+    // 익명 로그인은 이전 접속 정보를 복원한 뒤에 판단해요
+    await new Promise(res => { const off = fb.auth().onAuthStateChanged(() => { off(); res(); }); });
     const cred = fb.auth().currentUser ? null : await fb.auth().signInAnonymously();
-    S.uid = (cred && cred.user && cred.user.uid) || fb.auth().currentUser.uid;
+    S.authUid = (cred && cred.user && cred.user.uid) || fb.auth().currentUser.uid;
   }catch(e){
     console.error(e);
     S.flags.connErr = (e && e.code) || 'network';
     goLocal(); return;
   }
   const db = makeDb(fb.firestore());
+  S.db = db;
+  // 이 기기가 다른 기기의 정보로 '이어하기' 돼 있으면 그 조원 ID로 써요
+  S.uid = S.authUid;
+  try{ const ln = await db.doc('links/' + S.authUid).get(); if(ln.exists && ln.data().mid) S.uid = ln.data().mid; }catch(e){ console.error(e); }
   const uid = S.uid;
-  S.db = db; S.mode = 'live';
+  S.mode = 'live';
+  loadResume();
   S.loaded.teams = true;   // 팀은 하나씩 불러오므로 팀별 로딩 표시로 대신해요
   loadTimer = setTimeout(() => { if(!S.loaded.me){ S.flags.slow = true; scheduleRender(); } }, 10000);
   const settle = () => { if(S.loaded.me){ clearTimeout(loadTimer); S.flags.slow = false; } };
