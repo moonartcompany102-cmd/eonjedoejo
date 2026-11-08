@@ -62,7 +62,13 @@
 :root[data-theme="cherry"]{--bg:#FFF4F8;--surface:#FFFFFF;--surface-2:#FCE5EE;--ink:#3E2230;--muted:#875C70;--line:#F4D2E0;--lav:#F6B8D1;--lav-ink:#B0346B;color-scheme:light}
 :root[data-theme="lemon"]{--bg:#FFFCEB;--surface:#FFFFFF;--surface-2:#FFF4C4;--ink:#3A3410;--muted:#776D3A;--line:#F0E4A8;--lav:#FBE38A;--lav-ink:#7F6200;color-scheme:light}
 :root[data-theme="forest"]{--bg:#F3F7F1;--surface:#FFFFFF;--surface-2:#E3ECDD;--ink:#22301E;--muted:#5B6B54;--line:#D4E0CD;--lav:#B7D3A8;--lav-ink:#3E6B2E;color-scheme:light}
-:root[data-theme="sunset"]{--bg:#FFF5F0;--surface:#FFFFFF;--surface-2:#FFE5D8;--ink:#3B231C;--muted:#825C4F;--line:#F3D3C4;--lav:#FFB59A;--lav-ink:#B83C0A;color-scheme:light}
+:root[data-theme="sunset"]{--bg:#F9CFC8;--surface:#FFFFFF;--surface-2:#FCE6EC;--ink:#3A1830;--muted:#6A4459;--line:#F2CBD8;--lav:#F7A1C0;--lav-ink:#B0245E;--sky:#C9B2F5;color-scheme:light}
+/* 노을: 위는 보랏빛 하늘 → 분홍 → 아래는 주황빛 지평선, 맨 아래 가운데에 지는 해의 빛 */
+:root[data-theme="sunset"] body{background:
+  radial-gradient(ellipse 70% 38% at 50% 104%,rgba(255,240,175,.95) 0%,rgba(255,196,120,.75) 30%,rgba(255,170,110,0) 70%),
+  linear-gradient(180deg,#A891EE 0%,#D7A2E0 22%,#F6A9C2 45%,#FDB79A 70%,#FFD49A 100%) fixed}
+:root[data-theme="sunset"] .card{background:color-mix(in srgb,var(--surface) 90%,transparent)}
+:root[data-theme="sunset"] .view-head .muted,:root[data-theme="sunset"] .view-head p{color:#4A2440}
 .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
 .theme-sw{display:grid;gap:6px;justify-items:center;padding:10px 6px;border:2px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer;font-size:13px;color:var(--ink);text-align:center}
 .theme-sw:hover{border-color:var(--lav-ink)}
@@ -1249,7 +1255,7 @@ const THEMES = [
   {k:'cherry', l:'벚꽃',   c:'#F6B8D1'},
   {k:'lemon',  l:'레몬',   c:'#FBE38A'},
   {k:'forest', l:'숲',     c:'#B7D3A8'},
-  {k:'sunset', l:'노을',   c:'#FFB59A'},
+  {k:'sunset', l:'노을',   c:'radial-gradient(circle at 50% 100%,#FFF0AF 0,#FFC478 22%,transparent 46%),linear-gradient(180deg,#A891EE,#F6A9C2 50%,#FDB79A)'},
   {k:'navy',   l:'밤하늘', c:'radial-gradient(1.6px 1.6px at 30% 32%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 68% 52%,#fff 50%,transparent 51%),radial-gradient(1.4px 1.4px at 42% 74%,#FFF3C8 50%,transparent 51%),radial-gradient(1px 1px at 72% 24%,#fff 50%,transparent 51%),linear-gradient(160deg,#24366B,#0A1022)'}
 ];
 const THEME_KEY = 'eonjedoejo-theme';
